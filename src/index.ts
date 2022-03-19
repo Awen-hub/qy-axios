@@ -76,15 +76,15 @@ interface responseOption {
   };
 }
 
+type InterceptorFn = (config: requestConfig) => any;
+interface InterceptorsData {
+  use: (fn: InterceptorFn) => typeof fn;
+  eject: (fn: InterceptorFn) => typeof fn;
+}
+
 class InterceptorsConstructor {
-  private request: {
-    use: (fn: any) => void;
-    eject: (fn: any) => void;
-  };
-  private responese: {
-    use: (fn: any) => void;
-    eject: (fn: any) => void;
-  };
+  request: InterceptorsData;
+  response: InterceptorsData;
   requestInterceptors: ((fn: any) => void | false)[] = [];
   responseInterceptors: ((fn: any) => void | false)[] = [];
   constructor() {
@@ -92,33 +92,37 @@ class InterceptorsConstructor {
     const responseInterceptors: any[] = [];
     this.requestInterceptors = requestInterceptors;
     this.responseInterceptors = responseInterceptors;
-    const useRequestInterceptors = (fn: any) => {
+    const useRequestInterceptors = (fn: InterceptorFn) => {
       requestInterceptors.push(fn);
+      return fn;
     };
-    const ejectRequestInterceptors = (fn: any) => {
+    const ejectRequestInterceptors = (fn: InterceptorFn) => {
       const fnIndex = requestInterceptors.indexOf(fn);
       if (fnIndex !== -1) {
         requestInterceptors.splice(fnIndex, 1);
       } else {
         throw new Error("需要移除的拦截器尚未注册");
       }
+      return fn;
     };
     this.request = {
       use: useRequestInterceptors,
       eject: ejectRequestInterceptors,
     };
-    const useResponseInterceptors = (fn: any) => {
+    const useResponseInterceptors = (fn: InterceptorFn) => {
       responseInterceptors.push(fn);
+      return fn
     };
-    const ejectResponseInterceptors = (fn: any) => {
+    const ejectResponseInterceptors = (fn: InterceptorFn) => {
       const fnIndex = responseInterceptors.indexOf(fn);
       if (fnIndex !== -1) {
         responseInterceptors.splice(fnIndex, 1);
       } else {
         throw new Error("需要移除的拦截器尚未注册");
       }
+      return fn
     };
-    this.responese = {
+    this.response = {
       use: useResponseInterceptors,
       eject: ejectResponseInterceptors,
     };
@@ -126,14 +130,13 @@ class InterceptorsConstructor {
 }
 
 class AxiosConstructor {
-  private dafaults: defaultsOption = {};
-  private interceptors;
-  constructor(dafaults: defaultsOption) {
-    this.dafaults = dafaults;
-    this.interceptors = new InterceptorsConstructor();
+  defaults: defaultsOption = {};
+  interceptors = new InterceptorsConstructor();
+  constructor(defaults: defaultsOption) {
+    this.defaults = defaults;
   }
   private request = (config: requestConfig) => {
-    const defaults = this.dafaults;
+    const defaults = this.defaults;
     let newConfig = merge(defaults, config);
     if (defaults.hasOwnProperty("baseURL")) {
       newConfig.url = defaults.baseURL + newConfig.url;
@@ -170,15 +173,15 @@ class AxiosConstructor {
     });
   };
 
-  create = (config: defaultsOption) => {
+  create = (config?: defaultsOption) => {
+    if (config === undefined) {
+      config = {}
+    }
     return new AxiosConstructor(config);
   };
 
-  get = (
-    url: string,
-    config?: Omit<requestConfig, "method" | "url">
-  ) => {
-    config = config === undefined ? {}: config
+  get = (url: string, config?: Omit<requestConfig, "method" | "url">) => {
+    config = config === undefined ? {} : config;
     const newConfig: requestConfig = {
       ...config,
       url,
@@ -187,11 +190,8 @@ class AxiosConstructor {
     return this.request(newConfig);
   };
 
-  post = (
-    url: string,
-    config?: Omit<requestConfig, "method" | "url">
-  ) => {
-    config = config === undefined ? {}: config
+  post = (url: string, config?: Omit<requestConfig, "method" | "url">) => {
+    config = config === undefined ? {} : config;
     const newConfig: requestConfig = {
       ...config,
       url,
@@ -200,11 +200,8 @@ class AxiosConstructor {
     return this.request(newConfig);
   };
 
-  options = (
-    url: string,
-    config?: Omit<requestConfig, "method" | "url">
-  ) => {
-    config = config === undefined ? {}: config
+  options = (url: string, config?: Omit<requestConfig, "method" | "url">) => {
+    config = config === undefined ? {} : config;
     const newConfig: requestConfig = {
       ...config,
       url,
@@ -213,11 +210,8 @@ class AxiosConstructor {
     return this.request(newConfig);
   };
 
-  head = (
-    url: string,
-    config?: Omit<requestConfig, "method" | "url">
-  ) => {
-    config = config === undefined ? {}: config
+  head = (url: string, config?: Omit<requestConfig, "method" | "url">) => {
+    config = config === undefined ? {} : config;
     const newConfig: requestConfig = {
       ...config,
       url,
@@ -226,11 +220,8 @@ class AxiosConstructor {
     return this.request(newConfig);
   };
 
-  put = (
-    url: string,
-    config?: Omit<requestConfig, "method" | "url">
-  ) => {
-    config = config === undefined ? {}: config
+  put = (url: string, config?: Omit<requestConfig, "method" | "url">) => {
+    config = config === undefined ? {} : config;
     const newConfig: requestConfig = {
       ...config,
       url,
@@ -239,11 +230,8 @@ class AxiosConstructor {
     return this.request(newConfig);
   };
 
-  delete = (
-    url: string,
-    config?: Omit<requestConfig, "method" | "url">
-  ) => {
-    config = config === undefined ? {}: config
+  delete = (url: string, config?: Omit<requestConfig, "method" | "url">) => {
+    config = config === undefined ? {} : config;
     const newConfig: requestConfig = {
       ...config,
       url,
@@ -252,11 +240,8 @@ class AxiosConstructor {
     return this.request(newConfig);
   };
 
-  trace = (
-    url: string,
-    config?: Omit<requestConfig, "method" | "url">
-  ) => {
-    config = config === undefined ? {}: config
+  trace = (url: string, config?: Omit<requestConfig, "method" | "url">) => {
+    config = config === undefined ? {} : config;
     const newConfig: requestConfig = {
       ...config,
       url,
@@ -265,11 +250,8 @@ class AxiosConstructor {
     return this.request(newConfig);
   };
 
-  connect = (
-    url: string,
-    config?: Omit<requestConfig, "method" | "url">
-  ) => {
-    config = config === undefined ? {}: config
+  connect = (url: string, config?: Omit<requestConfig, "method" | "url">) => {
+    config = config === undefined ? {} : config;
     const newConfig: requestConfig = {
       ...config,
       url,
@@ -279,4 +261,4 @@ class AxiosConstructor {
   };
 }
 
-export default new AxiosConstructor({})
+export default new AxiosConstructor({});

@@ -29,12 +29,24 @@ export interface requestConfig {
     enableChunked?: string;
     forceCellularNetwork?: string;
 }
+declare type InterceptorFn = (config: requestConfig) => any;
+interface InterceptorsData {
+    use: (fn: InterceptorFn) => typeof fn;
+    eject: (fn: InterceptorFn) => typeof fn;
+}
+declare class InterceptorsConstructor {
+    request: InterceptorsData;
+    response: InterceptorsData;
+    requestInterceptors: ((fn: any) => void | false)[];
+    responseInterceptors: ((fn: any) => void | false)[];
+    constructor();
+}
 declare class AxiosConstructor {
-    private dafaults;
-    private interceptors;
-    constructor(dafaults: defaultsOption);
+    defaults: defaultsOption;
+    interceptors: InterceptorsConstructor;
+    constructor(defaults: defaultsOption);
     private request;
-    create: (config: defaultsOption) => AxiosConstructor;
+    create: (config?: defaultsOption | undefined) => AxiosConstructor;
     get: (url: string, config?: Pick<requestConfig, "data" | "header" | "timeout" | "dataType" | "responseType" | "enableHttp2" | "enableQuic" | "enableCache" | "enableHttpDNS" | "httpDNSServiceId" | "enableChunked" | "forceCellularNetwork"> | undefined) => Promise<unknown>;
     post: (url: string, config?: Pick<requestConfig, "data" | "header" | "timeout" | "dataType" | "responseType" | "enableHttp2" | "enableQuic" | "enableCache" | "enableHttpDNS" | "httpDNSServiceId" | "enableChunked" | "forceCellularNetwork"> | undefined) => Promise<unknown>;
     options: (url: string, config?: Pick<requestConfig, "data" | "header" | "timeout" | "dataType" | "responseType" | "enableHttp2" | "enableQuic" | "enableCache" | "enableHttpDNS" | "httpDNSServiceId" | "enableChunked" | "forceCellularNetwork"> | undefined) => Promise<unknown>;

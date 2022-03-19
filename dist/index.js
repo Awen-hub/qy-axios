@@ -9,6 +9,7 @@ class InterceptorsConstructor {
         this.responseInterceptors = responseInterceptors;
         const useRequestInterceptors = (fn) => {
             requestInterceptors.push(fn);
+            return fn;
         };
         const ejectRequestInterceptors = (fn) => {
             const fnIndex = requestInterceptors.indexOf(fn);
@@ -18,6 +19,7 @@ class InterceptorsConstructor {
             else {
                 throw new Error("需要移除的拦截器尚未注册");
             }
+            return fn;
         };
         this.request = {
             use: useRequestInterceptors,
@@ -25,6 +27,7 @@ class InterceptorsConstructor {
         };
         const useResponseInterceptors = (fn) => {
             responseInterceptors.push(fn);
+            return fn;
         };
         const ejectResponseInterceptors = (fn) => {
             const fnIndex = responseInterceptors.indexOf(fn);
@@ -34,18 +37,20 @@ class InterceptorsConstructor {
             else {
                 throw new Error("需要移除的拦截器尚未注册");
             }
+            return fn;
         };
-        this.responese = {
+        this.response = {
             use: useResponseInterceptors,
             eject: ejectResponseInterceptors,
         };
     }
 }
 class AxiosConstructor {
-    constructor(dafaults) {
-        this.dafaults = {};
+    constructor(defaults) {
+        this.defaults = {};
+        this.interceptors = new InterceptorsConstructor();
         this.request = (config) => {
-            const defaults = this.dafaults;
+            const defaults = this.defaults;
             let newConfig = merge(defaults, config);
             if (defaults.hasOwnProperty("baseURL")) {
                 newConfig.url = defaults.baseURL + newConfig.url;
@@ -82,6 +87,9 @@ class AxiosConstructor {
             });
         };
         this.create = (config) => {
+            if (config === undefined) {
+                config = {};
+            }
             return new AxiosConstructor(config);
         };
         this.get = (url, config) => {
@@ -156,8 +164,7 @@ class AxiosConstructor {
             };
             return this.request(newConfig);
         };
-        this.dafaults = dafaults;
-        this.interceptors = new InterceptorsConstructor();
+        this.defaults = defaults;
     }
 }
 export default new AxiosConstructor({});
